@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "482581517877",
+    "project_id": "quez-89290",
+    "storage_bucket": "quez-89290.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:482581517877:android:30d855ad0c3263ea5ec37c",
+        "android_client_info": {
+          "package_name": "com.example.quez"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBveQ4R5o7DvqYZeakIs6rdJGBRMV2uW-U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

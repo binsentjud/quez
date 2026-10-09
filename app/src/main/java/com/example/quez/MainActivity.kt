@@ -1,299 +1,130 @@
+
 package com.example.quez
 
 import android.net.Uri
 import android.os.Bundle
-
-import com.google.firebase.Firebase
-import com.google.firebase.ai.ai
-import com.google.firebase.ai.type.GenerativeBackend
-import com.google.firebase.ai.type.content
+import android.view.View
+import android.widget.FrameLayout
+import android.widget.TextView
 
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
-
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.ComposeView
 
 import com.example.quez.ui.theme.QuEZTheme
-
-import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
-import com.tom_roush.pdfbox.pdmodel.PDDocument
-import com.tom_roush.pdfbox.text.PDFTextStripper
-
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-
-import androidx.compose.runtime.rememberCoroutineScope
-
-import kotlinx.coroutines.launch
-
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
-
+import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Load the XML dashboard and bottom navigation bar
+        setContentView(R.layout.activity_main)
+
+        // Initialize PDFBox
         PDFBoxResourceLoader.init(applicationContext)
 
+        // Configure Firebase App Check for development
         val firebaseAppCheck = FirebaseAppCheck.getInstance()
-
         firebaseAppCheck.installAppCheckProviderFactory(
             DebugAppCheckProviderFactory.getInstance()
         )
 
-        setContent {
-            QuEZTheme {
-                PDFUploader()
-            }
-        }
-    }
-}
+        // Find the main content area and bottom navigation
+        val mainContent = findViewById<FrameLayout>(R.id.mainContent)
+        val bottomNavigation = findViewById<View>(R.id.bottomNavigation)
 
-@Composable
-fun PDFUploader() {
+        // Retrieve the navigation items
+        val navReview = findViewById<TextView>(R.id.navReview)
+        val navStats = findViewById<TextView>(R.id.navStats)
+        val navSettings = findViewById<TextView>(R.id.navSettings)
+        val navUser = findViewById<TextView>(R.id.navUser)
 
-    val context = LocalContext.current
+        val navItems: List<Pair<String, TextView>> = listOf(
+            "Review" to navReview,
+            "Stats" to navStats,
+            "Settings" to navSettings,
+            "User" to navUser
+        )
 
-    val scope = rememberCoroutineScope()
-
-    val model = Firebase.ai(
-        backend = GenerativeBackend.googleAI()
-    ).generativeModel("gemini-3.5-flash-lite")
-
-    var selectedPdfUri by remember {
-        mutableStateOf<Uri?>(null)
-    }
-
-    var extractedText by remember {
-        mutableStateOf("")
-    }
-
-    var isExtracting by remember {
-        mutableStateOf(false)
-    }
-
-    var summaryText by remember {
-        mutableStateOf("")
-    }
-
-    var isSummarizing by remember {
-        mutableStateOf(false)
-    }
-
-    val pdfPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
-
-        if (uri != null) {
-            selectedPdfUri = uri
-            extractedText = ""
-            isExtracting = true
-        }
-    }
-
-    // Extract PDF text whenever a PDF is selected
-    LaunchedEffect(selectedPdfUri) {
-
-        val uri = selectedPdfUri
-
-        if (uri != null) {
-
-            extractedText = try {
-
-                withContext(Dispatchers.IO) {
-
-                    val inputStream =
-                        context.contentResolver.openInputStream(uri)
-
-                    inputStream.use { stream ->
-
-                        val document = PDDocument.load(stream)
-
-                        val stripper = PDFTextStripper()
-
-                        val text = stripper.getText(document)
-
-                        document.close()
-
-                        text
-                    }
-                }
-
-            } catch (e: Exception) {
-
-                "Error extracting PDF text:\n${e.message}"
-
-            }
-
-            isExtracting = false
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-
-        Button(
-            onClick = {
-                pdfPicker.launch(arrayOf("application/pdf"))
-            }
+        // Display the selected screen
+        fun showScreen(
+            screen: String,
+            pdfUri: Uri? = null
         ) {
-            Text("Upload PDF")
-        }
+            // Hide bottom navigation during the quiz
+            bottomNavigation.visibility =
+                if (screen == "Quiz") View.GONE else View.VISIBLE
 
-        if (selectedPdfUri != null) {
+            // Keep Review selected while the quiz is open
+            val selectedScreen =
+                if (screen == "Quiz") "Review" else screen
 
-            if (isExtracting) {
+            // Update the selected navigation item's state
+            navItems.forEach { (name, item) ->
+                item.isSelected = name == selectedScreen
+            }
 
-                Text(
-                    text = "Extracting PDF text...",
-                    modifier = Modifier.padding(top = 16.dp)
+            // Clear the previous screen
+            mainContent.removeAllViews()
+
+            val composeView = ComposeView(this)
+
+            mainContent.addView(
+                composeView,
+                FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT
                 )
+            )
 
-            } else {
-
-                Text(
-                    text = "Extracted Text:",
-                    modifier = Modifier
-                        .padding(top = 16.dp)
-                        .align(Alignment.Start)
-                )
-
-                // Text area
-                Text(
-                    text = extractedText,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(top = 8.dp)
-                        .verticalScroll(rememberScrollState())
-                )
-
-                Button(
-                    onClick = {
-
-                        isSummarizing = true
-                        summaryText = ""
-
-                        scope.launch {
-
-                            try {
-
-                                val prompt = """
-                    You are a study-material processor.
-
-                    Clean the extracted PDF text internally, then generate 10 multiple-choice questions based ONLY on the cleaned material.
-                    
-                    Requirements:
-                    
-                    - Remove irrelevant, repeated, administrative, and navigation information.
-                    - Keep important concepts, definitions, formulas, examples, procedures, dates, names, and technical terms.
-                    - Do not invent information.
-                    - Do not show or output the cleaned summary.
-                    - Use plain text only. No Markdown or LaTeX.
-                    - Due to the screen size of phones, keep choices short but concise.
-                    
-                    Format the output exactly as:
-                    
-                    1. Question?
-                    A. Choice A
-                    B. Choice B
-                    C. Choice C
-                    D. Choice D
-                    2. Question?
-                    A. Choice A
-                    B. Choice B
-                    C. Choice C
-                    D. Choice D
-                    
-                    Continue until question 10.
-                    
-                    Do not include answers, explanations, summaries, headings, or bullets. Output only the 10 questions and their choices.
-
-                    $extractedText
-                """.trimIndent()
-
-                                val response = model.generateContent(prompt)
-
-                                summaryText = response.text ?: "No summary was generated."
-
-                            } catch (e: Exception) {
-
-                                summaryText = "Error generating summary:\n${e.message}"
-
+            composeView.setContent {
+                QuEZTheme {
+                    when (screen) {
+                        "Review" -> ReviewScreen(
+                            onStartQuiz = { selectedUri ->
+                                showScreen("Quiz", selectedUri)
                             }
+                        )
 
-                            isSummarizing = false
+                        "Quiz" -> {
+                            if (pdfUri != null) {
+                                QuizScreen(
+                                    pdfUri = pdfUri,
+                                    onBack = {
+                                        showScreen("Review")
+                                    }
+                                )
+                            } else {
+                                Text("Please select a PDF first.")
+                            }
                         }
+
+                        else -> Text("Coming Soon")
                     }
-                ) {
-                    Text("Generate Questions")
-                }
-
-                if (isSummarizing) {
-
-                    Text(
-                        text = "Generating questions...",
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
-
-                } else if (summaryText.isNotEmpty()) {
-
-                    Text(
-                        text = "Questions:",
-                        modifier = Modifier
-                            .padding(top = 16.dp)
-                            .align(Alignment.Start)
-                    )
-
-                    Text(
-                        text = summaryText,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .padding(top = 8.dp)
-                            .verticalScroll(rememberScrollState())
-                    )
-                }
-
-                // Upload another PDF button
-                Button(
-                    onClick = {
-                        pdfPicker.launch(arrayOf("application/pdf"))
-                    },
-                    modifier = Modifier.padding(top = 16.dp)
-                ) {
-                    Text("Upload Another PDF")
                 }
             }
         }
+
+        // Connect each navigation item to its screen
+        navItems.forEach { (screen, item) ->
+            item.setOnClickListener {
+                showScreen(screen)
+            }
+        }
+
+        // Display Review when the app starts
+        showScreen("Review")
+
+        // Enable immersive fullscreen mode
+        @Suppress("DEPRECATION")
+        window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_FULLSCREEN or
+                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                )
     }
 }

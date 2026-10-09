@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Selected item: dark gray text -->
+    <item
+        android:state_selected="true"
+        android:color="#434343" />
+
+    <!-- Unselected items: gray text -->
+    <item android:color="#727272" />
+
+</selector>

@@ -1,4 +1,3 @@
-
 package com.example.quez
 
 import android.content.Context

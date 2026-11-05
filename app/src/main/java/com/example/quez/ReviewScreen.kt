@@ -10,13 +10,29 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+
+import androidx.compose.foundation.layout.size
+
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+
+import androidx.compose.foundation.clickable
+
+
+
 
 @Composable
 fun ReviewScreen(
@@ -30,6 +46,10 @@ fun ReviewScreen(
         }
     }
 
+    val megapixel = FontFamily(
+        Font(R.font.megapixel)
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -38,23 +58,23 @@ fun ReviewScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "QuEZ",
-            color = Color.White
+        Image(
+            painter = painterResource(id = R.drawable.q_review_upload),
+            contentDescription = "Choose a PDF",
+            modifier = Modifier
+                .size(175.dp)
+                .clickable {
+                    pdfPicker.launch(arrayOf("application/pdf"))
+                },
+            contentScale = ContentScale.Fit
         )
 
         Text(
-            text = "Upload a PDF to generate your quiz.",
-            color = Color(0xFFA0A0A0)
+            text = "Upload PDF",
+            color = Color(0xFF434343),
+            fontFamily = megapixel,
+            fontSize = 23.sp,
+            fontWeight = FontWeight.Bold
         )
-
-        Button(
-            onClick = {
-                pdfPicker.launch(arrayOf("application/pdf"))
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Upload PDF")
-        }
     }
 }

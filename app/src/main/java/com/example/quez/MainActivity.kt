@@ -1,6 +1,6 @@
-
 package com.example.quez
 
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -10,6 +10,9 @@ import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.Text
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 import com.example.quez.ui.theme.QuEZTheme
 import com.google.firebase.appcheck.FirebaseAppCheck
@@ -21,7 +24,20 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Load the XML dashboard and bottom navigation bar
+        // Disable forced system-bar contrast on Android 10 and later
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            window.isStatusBarContrastEnforced = false
+            window.isNavigationBarContrastEnforced = false
+        }
+
+        // Configure fullscreen window for Android 13
+        window.statusBarColor = Color.WHITE
+        window.navigationBarColor = Color.WHITE
+        window.decorView.setBackgroundColor(Color.WHITE)
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        // Load the XML layout
         setContentView(R.layout.activity_main)
 
         // Initialize PDFBox
@@ -119,12 +135,24 @@ class MainActivity : ComponentActivity() {
         // Display Review when the app starts
         showScreen("Review")
 
-        // Enable immersive fullscreen mode
-        @Suppress("DEPRECATION")
-        window.decorView.systemUiVisibility = (
-                View.SYSTEM_UI_FLAG_FULLSCREEN or
-                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                )
+        // Enable immersive fullscreen after the initial screen is created
+        window.decorView.post {
+            enableImmersiveMode()
+        }
+    }
+
+    // Enable immersive fullscreen mode
+    private fun enableImmersiveMode() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        val controller = WindowInsetsControllerCompat(
+            window,
+            window.decorView
+        )
+
+        controller.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+        controller.hide(WindowInsetsCompat.Type.systemBars())
     }
 }
